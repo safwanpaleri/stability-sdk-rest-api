@@ -40,7 +40,7 @@ class ImageGenerationRequest(BaseModel):
     
 class ImageToImageGenerationRequest(BaseModel):
     prompt:str
-    init_image = None #initial image to work on.
+    init_image:io.BytesIO() #initial image to work on.
     height=512
     width=512
     cfg_scale=7.0
@@ -68,7 +68,7 @@ async def generate(req: ImageGenerationRequest):
     imageAsBytes = imageToByteArray(image)
     return Response(imageAsBytes, media_type="image/png")
 
-@app.post("/generateiti")
+@app.post("/image-to-image")
 async def generateiti(req: ImageToImageGenerationRequest):
     image2 = getFromImage(req)
     if (isinstance(image2, str)):
@@ -134,9 +134,9 @@ def getFromImage(params: ImageToImageGenerationRequest):
                 return "Your request activated the API's safety filters and could not be processed."
             if artifact.type == generation.ARTIFACT_IMAGE:
                 global img2
-                image2 = Image.open(io.BytesIO(artifact.binary))
+                img2 = Image.open(io.BytesIO(artifact.binary))
 
-    return image2
+    return img2
 
 
 def imageToByteArray(image: Image) -> bytes:
