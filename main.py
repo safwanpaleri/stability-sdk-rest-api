@@ -69,7 +69,7 @@ async def generate(req: ImageGenerationRequest):
     return Response(imageAsBytes, media_type="image/png")
 
 @app.post("/generateiti")
-async def generate(req: ImageToImageGenerationRequest):
+async def generateiti(req: ImageToImageGenerationRequest):
     image2 = getFromImage(req)
     if (isinstance(image2, str)):
         return Response(content=image2, status_code=500)
