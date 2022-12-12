@@ -70,10 +70,10 @@ async def generate(req: ImageGenerationRequest):
 
 @app.post("/generateiti")
 async def generate(req: ImageToImageGenerationRequest):
-    image = getFromImage(req)
-    if (isinstance(image, str)):
-        return Response(content=image, status_code=500)
-    imageAsBytes = imageToByteArray(image)
+    image2 = getFromImage(req)
+    if (isinstance(image2, str)):
+        return Response(content=image2, status_code=500)
+    imageAsBytes = imageToByteArray(image2)
     return Response(imageAsBytes, media_type="image/png")
 
 def getImage(params: ImageGenerationRequest):
@@ -135,6 +135,8 @@ def getFromImage(params: ImageToImageGenerationRequest):
             if artifact.type == generation.ARTIFACT_IMAGE:
                 global img2
                 image2 = Image.open(io.BytesIO(artifact.binary))
+
+    return image2
 
 
 def imageToByteArray(image: Image) -> bytes:
