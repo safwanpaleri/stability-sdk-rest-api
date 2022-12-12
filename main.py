@@ -38,6 +38,19 @@ class ImageGenerationRequest(BaseModel):
     seed: Optional[int] = None # Integer value # Integer value
     safety=False
     
+class ImageToImageGenerationRequest(BaseModel):
+    prompt:str
+    init_image = None #initial image to work on.
+    height=512
+    width=512
+    cfg_scale=7.0
+    sampler="SAMPLER_K_LMS" # SAMPLER_DDIM, SAMPLER_DDPM, SAMPLER_K_EULER, SAMPLER_K_EULER_ANCESTRAL, SAMPLER_K_HEUN, SAMPLER_K_DPM_2, SAMPLER_K_DPM_2_ANCESTRAL, SAMPLER_K_LMS
+    steps=50
+    num_samples=1
+    seed: Optional[int] = None # Integer value # Integer value
+    safety=False
+
+
 stability_api = client.StabilityInference(
     key=dreamStudioAPIKey, 
     verbose=True,
@@ -50,6 +63,14 @@ async def root():
 @app.post("/generate")
 async def generate(req: ImageGenerationRequest):
     image = getImage(req)
+    if (isinstance(image, str)):
+        return Response(content=image, status_code=500)
+    imageAsBytes = imageToByteArray(image)
+    return Response(imageAsBytes, media_type="image/png")
+
+@app.post("/generateiti")
+async def generate(req: ImageToImageGenerationRequest):
+    image = getFromImage(req)
     if (isinstance(image, str)):
         return Response(content=image, status_code=500)
     imageAsBytes = imageToByteArray(image)
@@ -84,6 +105,37 @@ def getImage(params: ImageGenerationRequest):
                 image = Image.open(io.BytesIO(artifact.binary))
     
     return image
+
+def getFromImage(params: ImageToImageGenerationRequest):
+
+    seed = none;
+    if(params.seed):
+        seed = [int(x) for x in str(params.seed)]
+    
+    image2 = None
+
+    answers2 = stability_api.generate(
+        prompt = params.prompt,
+        init_image = params.init_image,
+        height = params.height,
+        width = params.width,
+         cfg_scale=params.cfg_scale,
+        sampler=params.sampler,
+        steps=params.steps,
+        seed=seed
+    ) 
+
+    for resp in answers2:
+        for artifact in resp.artifacts:
+            if artifact.finish_reason == generation.FILTER:
+                warnings.warn(
+                    "Your request activated the API's safety filters and could not be processed."
+                    "Please modify the prompt and try again.")
+                return "Your request activated the API's safety filters and could not be processed."
+            if artifact.type == generation.ARTIFACT_IMAGE:
+                global img2
+                image2 = Image.open(io.BytesIO(artifact.binary))
+
 
 def imageToByteArray(image: Image) -> bytes:
   imgByteArr = io.BytesIO()
